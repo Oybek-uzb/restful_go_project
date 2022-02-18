@@ -2,22 +2,26 @@ package main
 
 import (
 	"fmt"
-	"github.com/julienschmidt/httprouter"
 	"log"
 	"net"
 	"net/http"
+	"restful_go_project/internal/user"
 	"time"
+
+	"github.com/julienschmidt/httprouter"
 )
 
-func indexHandler(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	name := params.ByName("name")
-	w.Write([]byte(fmt.Sprintf("Hello, %s", name)))
+func main() {
+	fmt.Println("create router")
+	router := httprouter.New()
+
+	handler := user.NewHandler()
+	handler.Register(router)
+
+	start(router)
 }
 
-func main() {
-	router := httprouter.New()
-	router.GET("/:name", indexHandler)
-
+func start(router *httprouter.Router) {
 	listener, err := net.Listen("tcp", ":1234")
 	if err != nil {
 		panic(err)
