@@ -1,21 +1,23 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"net/http"
 	"restful_go_project/internal/user"
+	"restful_go_project/pkg/logging"
 	"time"
 
 	"github.com/julienschmidt/httprouter"
 )
 
 func main() {
-	fmt.Println("create router")
+	logging.Init()
+	logger := logging.GetLogger()
+	logger.Info("create router")
 	router := httprouter.New()
 
-	handler := user.NewHandler()
+	handler := user.NewHandler(logger)
 	handler.Register(router)
 
 	start(router)
