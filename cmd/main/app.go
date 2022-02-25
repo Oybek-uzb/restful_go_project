@@ -1,10 +1,11 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"net"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"restful_go_project/internal/config"
 	"restful_go_project/internal/user"
@@ -32,15 +33,29 @@ func start(router *httprouter.Router, cfg *config.Config) {
 	logger := logging.GetLogger()
 	logger.Info("start application")
 
-	if cfg.Listen.Type == "sock" {
-		filepath.Abs(filepath.Dir(os.Args[0]))
-	} else {
+	var listener net.Listener
+	var listenErr error
 
+	logger.Info("detect app path")
+	if cfg.Listen.Type == "sock" {
+		appDir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+		if err != nil {
+			logger.Fatal(err)
+		}
+		logger.Info("create socket")
+		socketPath := path.Join(appDir, "app:sock")
+
+		logger.Info("listen unix socket")
+		listener, listenErr = net.Listen("unix", socketPath)
+		logger.Infof("server is listening unix socket: %s", socketPath)
+	} else {
+		logger.Info("listen tcp")
+		listener, listenErr = net.Listen("tcp", fmt.Sprintf("%s:%s", cfg.Listen.BindIP, cfg.Listen.Port))
+		logger.Infof("server is listening %s:%s", cfg.Listen.BindIP, cfg.Listen.Port)
 	}
 
-	listener, err := net.Listen("tcp", cfg.Listen.Port)
-	if err != nil {
-		panic(err)
+	if listenErr != nil {
+		logger.Fatal(listenErr)
 	}
 
 	server := &http.Server{
@@ -48,6 +63,5 @@ func start(router *httprouter.Router, cfg *config.Config) {
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
-
-	log.Fatalln(server.Serve(listener))
+	logger.Fatal(server.Serve(listener))
 }
