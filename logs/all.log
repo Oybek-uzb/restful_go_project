@@ -25,3 +25,5 @@ time="2022-02-27T21:27:52+05:00" level=info msg="start application" func="main.s
 time="2022-02-27T21:27:52+05:00" level=info msg="detect app path" func="main.start()" file="app.go:39"
 time="2022-02-27T21:27:52+05:00" level=info msg="listen tcp" func="main.start()" file="app.go:52"
 time="2022-02-27T21:27:52+05:00" level=info msg="server is listening 0.0.0.0:10000" func="main.start()" file="app.go:54"
+time="2022-02-28T20:06:54+05:00" level=info msg="create router" func="main.main()" file="app.go:24"
+time="2022-02-28T20:06:54+05:00" level=info msg="read application configuration" func="restful_go_project/internal/config.GetConfig.func1()" file="config.go:34"

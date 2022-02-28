@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -9,6 +10,8 @@ import (
 	"path/filepath"
 	"restful_go_project/internal/config"
 	"restful_go_project/internal/user"
+	"restful_go_project/internal/user/db"
+	"restful_go_project/pkg/client/mongodb"
 	"restful_go_project/pkg/logging"
 	"time"
 
@@ -22,6 +25,28 @@ func main() {
 	router := httprouter.New()
 
 	cfg := config.GetConfig()
+	cfgMongo := cfg.MongoDB
+
+	mongodbClient, err := mongodb.NewClient(context.Background(), cfgMongo.Host, cfgMongo.Port, cfgMongo.Username, cfgMongo.Password, cfgMongo.Database, cfgMongo.AuthDB)
+	if err != nil {
+		panic(err)
+	}
+
+	storage := db.NewStorage(mongodbClient, cfg.MongoDB.Collection, logger)
+
+	user1 := user.User{
+		ID:           "",
+		Email:        "for@example.com",
+		Username:     "For",
+		PasswordHash: "12345",
+	}
+
+	user1ID, err := storage.Create(context.Background(), user1)
+	if err != nil {
+		panic(err)
+	}
+
+	logger.Info(user1ID)
 
 	handler := user.NewHandler(logger)
 	handler.Register(router)
