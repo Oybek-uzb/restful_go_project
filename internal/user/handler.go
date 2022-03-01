@@ -1,6 +1,7 @@
 package user
 
 import (
+	"fmt"
 	"net/http"
 	"restful_go_project/internal/apperror"
 	"restful_go_project/pkg/logging"
@@ -38,24 +39,25 @@ func (h *handler) Register(router *httprouter.Router) {
 }
 
 func (h *handler) GetUsersList(w http.ResponseWriter, r *http.Request) error {
-	w.Write([]byte("Getting a list of users"))
-	w.WriteHeader(200)
 
-	return nil
+	//w.Write([]byte("Getting a list of users"))
+	//w.WriteHeader(200)
+
+	return apperror.ErrNotFound
 }
 
 func (h *handler) GetUserByUUID(w http.ResponseWriter, r *http.Request) error {
-	w.Write([]byte("Getting user by uuid"))
-	w.WriteHeader(200)
+	//w.Write([]byte("Getting user by uuid"))
+	//w.WriteHeader(200)
 
-	return nil
+	return apperror.NewAppError(nil, "test", "test", "t13")
 }
 
 func (h *handler) CreateUser(w http.ResponseWriter, r *http.Request) error {
-	w.Write([]byte("Creating new user"))
-	w.WriteHeader(201)
+	//w.Write([]byte("Creating new user"))
+	//w.WriteHeader(201)
 
-	return nil
+	return fmt.Errorf("this is API error")
 }
 
 func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) error {
