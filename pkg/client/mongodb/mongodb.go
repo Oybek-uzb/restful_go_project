@@ -9,16 +9,16 @@ import (
 )
 
 func NewClient(ctx context.Context, host, port, username, password, database, authDB string) (*mongo.Database, error) {
-	// mongoDBURL := "mongodb+srv://oybek:1102123112@cluster0.gs3vf.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"
+	// mongoDBURL := "mongodb+srv://oybek:1102123112@cluster0.gs3vf.mongodb.net/userService?retryWrites=true&w=majority"
 	var mongoDBURL string
 	var isAuth bool
 
 	if username == "" && password == "" {
 		isAuth = false
-		mongoDBURL = fmt.Sprintf("mongodb://%s:%s", host, port)
+		mongoDBURL = fmt.Sprintf("mongodb+srv://oybek:1102123112@cluster0.gs3vf.mongodb.net/userService?retryWrites=true&w=majority")
 	} else {
 		isAuth = true
-		mongoDBURL = fmt.Sprintf("mongo://%s:%s@%s:%s", username, password, host, port)
+		mongoDBURL = fmt.Sprintf("%s:%s@%s:%s", username, password, host, port)
 	}
 
 	clientOptions := options.Client().ApplyURI(mongoDBURL)
