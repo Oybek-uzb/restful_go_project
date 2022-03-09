@@ -4,7 +4,12 @@ import (
 	"context"
 	"fmt"
 	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx/pgxpool"
 	"github.com/jackc/pgx/v4"
+	"log"
+	"restful_go_project/internal/config"
+	"restful_go_project/pkg/utils"
+	"time"
 )
 
 type Client interface {
@@ -14,7 +19,25 @@ type Client interface {
 	Begin(ctx context.Context) (pgx.Tx, error)
 }
 
-func NewClient(ctx context.Context, username, password, host, port, database string) {
-	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s", username, password, host, port, database)
+func NewClient(ctx context.Context, maxAttempts int, sc config.StorageConfig) (pool *pgxpool.Pool, err error) {
+	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s", sc.Username, sc.Password, sc.Host, sc.Port, sc.Database)
 
+	utils.DoWithTries(func() error {
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+
+		pool, err = pgxpool.Connect(ctx, dsn)
+		if err != nil {
+			fmt.Print("failed to connect")
+			return err
+		}
+
+		return nil
+	}, maxAttempts, 5*time.Second)
+
+	if err != nil {
+		log.Fatal("error do with tries postgresql")
+	}
+
+	return
 }
