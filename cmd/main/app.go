@@ -8,10 +8,11 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	author2 "restful_go_project/internal/author"
+	author "restful_go_project/internal/author/db"
 	"restful_go_project/internal/config"
 	"restful_go_project/internal/user"
-	"restful_go_project/internal/user/db"
-	"restful_go_project/pkg/client/mongodb"
+	"restful_go_project/pkg/client/postgresql"
 	"restful_go_project/pkg/logging"
 	"time"
 
@@ -25,28 +26,37 @@ func main() {
 	router := httprouter.New()
 
 	cfg := config.GetConfig()
-	cfgMongo := cfg.MongoDB
 
-	mongodbClient, err := mongodb.NewClient(context.Background(), cfgMongo.Host, cfgMongo.Port, cfgMongo.Username, cfgMongo.Password, cfgMongo.Database, cfgMongo.AuthDB)
+	postgreSQLClient, err := postgresql.NewClient(context.TODO(), 3, cfg.Storage)
 	if err != nil {
-		panic(err)
+		logger.Fatalf("%s", err)
 	}
 
-	storage := db.NewStorage(mongodbClient, cfg.MongoDB.Collection, logger)
+	repository := author.NewRepository(postgreSQLClient, logger)
 
-	user1 := user.User{
-		ID:           "",
-		Email:        "for@example.com",
-		Username:     "For",
-		PasswordHash: "12345",
+	newAu := author2.Author{
+		Name: "Tohir Malik",
 	}
-
-	user1ID, err := storage.Create(context.Background(), user1)
+	err = repository.Create(context.TODO(), &newAu)
 	if err != nil {
-		panic(err)
+		logger.Fatalf("%v", err)
+	}
+	logger.Infof("%v", newAu)
+
+	foundAu, err := repository.FindOne(context.TODO(), "89f44248-c821-40d6-bb1c-9fc7d1f747c4")
+	if err != nil {
+		logger.Fatalf("%v", err)
+	}
+	logger.Infof("%v", foundAu)
+
+	all, err := repository.FindAll(context.TODO())
+	if err != nil {
+		logger.Fatalf("%v", err)
 	}
 
-	logger.Info(user1ID)
+	for _, au := range all {
+		logger.Infof("%v", au)
+	}
 
 	handler := user.NewHandler(logger)
 	handler.Register(router)
