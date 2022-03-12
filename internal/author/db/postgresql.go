@@ -2,6 +2,7 @@ package author
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/jackc/pgconn"
 	"restful_go_project/internal/author"
@@ -27,9 +28,12 @@ func (r *repository) Create(ctx context.Context, author *author.Author) error {
 
 	r.logger.Trace(fmt.Sprintf("SQL Query: %s", formatQuery(q)))
 	err := r.client.QueryRow(ctx, q, author.Name).Scan(&author.ID)
+
+	var pgErr *pgconn.PgError
 	if err != nil {
-		if pgError, ok := err.(*pgconn.PgError); ok {
-			sqlErr := fmt.Errorf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgError.Message, pgError.Detail, pgError.Where, pgError.Code, pgError.SQLState())
+		if errors.Is(err, pgErr) {
+			pgErr = err.(*pgconn.PgError)
+			sqlErr := fmt.Errorf("SQL Error: %s, Detail: %s, Where: %s, Code: %s, SQLState: %s", pgErr.Message, pgErr.Detail, pgErr.Where, pgErr.Code, pgErr.SQLState())
 			r.logger.Error(sqlErr)
 			return sqlErr
 		}
