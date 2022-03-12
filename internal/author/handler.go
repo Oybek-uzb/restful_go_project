@@ -1,9 +1,10 @@
 package author
 
 import (
-	"fmt"
+	"encoding/json"
 	"net/http"
 	"restful_go_project/internal/apperror"
+	"restful_go_project/pkg/api/sort"
 	"restful_go_project/pkg/logging"
 
 	"restful_go_project/internal/handlers"
@@ -19,43 +20,55 @@ const (
 )
 
 type handler struct {
-	logger *logging.Logger
+	service *Service
+	logger  *logging.Logger
 }
 
-func NewHandler(logger *logging.Logger) handlers.Handler {
+func NewHandler(service *Service, logger *logging.Logger) handlers.Handler {
 	return &handler{
-		logger: logger,
+		service: service,
+		logger:  logger,
 	}
 }
 
 func (h *handler) Register(router *httprouter.Router) {
-	router.HandlerFunc(http.MethodGet, authorsURL, apperror.Middleware(h.GetAuthorsList))
-	router.HandlerFunc(http.MethodPost, authorsURL, apperror.Middleware(h.CreateAuthor))
-	router.HandlerFunc(http.MethodGet, authorURL, apperror.Middleware(h.GetAuthorByUUID))
+	router.HandlerFunc(http.MethodGet, authorsURL, sort.Middleware(apperror.Middleware(h.GetList), "created_at", sort.ASC))
 
 }
 
-func (h *handler) GetAuthorsList(w http.ResponseWriter, r *http.Request) error {
+func (h *handler) GetList(w http.ResponseWriter, r *http.Request) error {
+	var sortOptions sort.Options
+	if options, ok := r.Context().Value(sort.OptionsContextKey).(sort.Options); ok {
+		sortOptions = options
+	}
+	all, err := h.service.GetAll(r.Context(), sortOptions)
+	if err != nil {
+		w.WriteHeader(400)
+		return err
+	}
+	allBytes, err := json.Marshal(all)
+	if err != nil {
+		return err
+	}
+	w.WriteHeader(200)
+	w.Write(allBytes)
 
-	//w.Write([]byte("Getting a list of authors"))
-	//w.WriteHeader(200)
-
-	return apperror.ErrNotFound
+	return nil
 }
 
-func (h *handler) GetAuthorByUUID(w http.ResponseWriter, r *http.Request) error {
-	//w.Write([]byte("Getting author by uuid"))
-	//w.WriteHeader(200)
-
-	return apperror.NewAppError(nil, "test", "test", "t13")
-}
-
-func (h *handler) CreateAuthor(w http.ResponseWriter, r *http.Request) error {
-	//w.Write([]byte("Creating new author"))
-	//w.WriteHeader(201)
-
-	return fmt.Errorf("this is API error")
-}
+//func (h *handler) GetAuthorByUUID(w http.ResponseWriter, r *http.Request) error {
+//	//w.Write([]byte("Getting author by uuid"))
+//	//w.WriteHeader(200)
+//
+//	return apperror.NewAppError(nil, "test", "test", "t13")
+//}
+//
+//func (h *handler) CreateAuthor(w http.ResponseWriter, r *http.Request) error {
+//	//w.Write([]byte("Creating new author"))
+//	//w.WriteHeader(201)
+//
+//	return fmt.Errorf("this is API error")
+//}
 
 //func (h *handler) UpdateAuthor(w http.ResponseWriter, r *http.Request) error {
 //	w.Write([]byte("Update author"))

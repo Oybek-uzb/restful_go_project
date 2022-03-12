@@ -9,9 +9,8 @@ import (
 	"path"
 	"path/filepath"
 	author2 "restful_go_project/internal/author"
-	author "restful_go_project/internal/author/db"
+	author "restful_go_project/internal/author/db/postgresql"
 	"restful_go_project/internal/config"
-	"restful_go_project/internal/user"
 	"restful_go_project/pkg/client/postgresql"
 	"restful_go_project/pkg/logging"
 	"time"
@@ -34,32 +33,20 @@ func main() {
 
 	repository := author.NewRepository(postgreSQLClient, logger)
 
-	newAu := author2.Author{
-		Name: "Tohir Malik",
-	}
-	err = repository.Create(context.TODO(), &newAu)
-	if err != nil {
-		logger.Fatalf("%v", err)
-	}
-	logger.Infof("%v", newAu)
+	auService := author2.NewService(repository, logger)
+	auHandler := author2.NewHandler(auService, logger)
 
-	foundAu, err := repository.FindOne(context.TODO(), "89f44248-c821-40d6-bb1c-9fc7d1f747c4")
-	if err != nil {
-		logger.Fatalf("%v", err)
-	}
-	logger.Infof("%v", foundAu)
+	//all, err := repository.FindAll(context.TODO())
+	//if err != nil {
+	//	logger.Fatalf("%v", err)
+	//}
+	//
+	//for _, au := range all {
+	//	logger.Infof("%v", au)
+	//}
 
-	all, err := repository.FindAll(context.TODO())
-	if err != nil {
-		logger.Fatalf("%v", err)
-	}
-
-	for _, au := range all {
-		logger.Infof("%v", au)
-	}
-
-	handler := user.NewHandler(logger)
-	handler.Register(router)
+	//handler := user.NewHandler(logger)
+	auHandler.Register(router)
 
 	start(router, cfg)
 }

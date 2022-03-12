@@ -25,3 +25,10 @@ Content-Type: application/json
 {}
 
 ###
+
+GET http://localhost:1234/authors
+Content-Type: application/json
+
+{}
+
+###
