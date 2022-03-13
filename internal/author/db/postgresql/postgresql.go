@@ -6,7 +6,8 @@ import (
 	"fmt"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgconn"
-	"restful_go_project/internal/author"
+	"restful_go_project/internal/author/model"
+	"restful_go_project/internal/author/storage"
 	"restful_go_project/pkg/client/postgresql"
 	"restful_go_project/pkg/logging"
 	"strings"
@@ -21,7 +22,7 @@ func formatQuery(q string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(q, "\t", ""), "\n", " ")
 }
 
-func (r *repository) Create(ctx context.Context, author *author.Author) error {
+func (r *repository) Create(ctx context.Context, author *model.Author) error {
 	q := `INSERT INTO author (name) 
 		  VALUES ($1)
     	  RETURNING id
@@ -43,25 +44,29 @@ func (r *repository) Create(ctx context.Context, author *author.Author) error {
 	return nil
 }
 
-func (r *repository) FindAll(ctx context.Context) (u []author.Author, err error) {
-	qb := sq.Select("id, name").From("public.author")
-	q := `
-		SELECT id, name FROM public.author
-	`
-
-	r.logger.Trace(fmt.Sprintf("SQL Query: %s", formatQuery(q)))
-
-	rows, err := r.client.Query(ctx, q)
+func (r *repository) FindAll(ctx context.Context, sortOption storage.SortOptions) (u []model.Author, err error) {
+	qb := sq.Select("id, name, age, is_alive, created_at").From("public.author")
+	if sortOption.Field != "" && sortOption.Order != "" {
+		qb = qb.OrderBy(fmt.Sprintf("%s %s", sortOption.Field, sortOption.Order))
+	}
+	sql, i, err := qb.ToSql()
 	if err != nil {
 		return nil, err
 	}
 
-	authors := make([]author.Author, 0)
+	r.logger.Trace(fmt.Sprintf("SQL Query: %s", formatQuery(sql)))
+
+	rows, err := r.client.Query(ctx, sql, i...)
+	if err != nil {
+		return nil, err
+	}
+
+	authors := make([]model.Author, 0)
 
 	for rows.Next() {
-		var au author.Author
+		var au model.Author
 
-		err = rows.Scan(&au.ID, &au.Name)
+		err = rows.Scan(&au.ID, &au.Name, &au.Age, &au.IsAlive, &au.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -75,23 +80,23 @@ func (r *repository) FindAll(ctx context.Context) (u []author.Author, err error)
 	return authors, nil
 }
 
-func (r *repository) FindOne(ctx context.Context, id string) (author.Author, error) {
+func (r *repository) FindOne(ctx context.Context, id string) (model.Author, error) {
 	q := `
 		SELECT id, name FROM public.author WHERE id=$1
 	`
 
 	r.logger.Trace(fmt.Sprintf("SQL Query: %s", formatQuery(q)))
 
-	var au author.Author
+	var au model.Author
 	err := r.client.QueryRow(ctx, q, id).Scan(&au.ID, &au.Name)
 	if err != nil {
-		return author.Author{}, err
+		return model.Author{}, err
 	}
 
 	return au, nil
 }
 
-func (r *repository) Update(ctx context.Context, user author.Author) error {
+func (r *repository) Update(ctx context.Context, user model.Author) error {
 	//TODO implement me
 	panic("implement me")
 }
@@ -101,7 +106,7 @@ func (r *repository) Delete(ctx context.Context, id string) error {
 	panic("implement me")
 }
 
-func NewRepository(client postgresql.Client, logger *logging.Logger) author.Repository {
+func NewRepository(client postgresql.Client, logger *logging.Logger) storage.Repository {
 	return &repository{
 		client: client,
 		logger: logger,

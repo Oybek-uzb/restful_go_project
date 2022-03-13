@@ -36,7 +36,7 @@ func Middleware(h http.HandlerFunc, defaultSortByField, defaultSortOrder string)
 			Order: sortOrder,
 		}
 		ctx := context.WithValue(r.Context(), OptionsContextKey, options)
-		r.WithContext(ctx)
+		r = r.WithContext(ctx)
 
 		h(w, r)
 	}

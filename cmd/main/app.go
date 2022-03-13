@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	author2 "restful_go_project/internal/author"
 	author "restful_go_project/internal/author/db/postgresql"
+	"restful_go_project/internal/author/service"
 	"restful_go_project/internal/config"
 	"restful_go_project/pkg/client/postgresql"
 	"restful_go_project/pkg/logging"
@@ -33,7 +34,7 @@ func main() {
 
 	repository := author.NewRepository(postgreSQLClient, logger)
 
-	auService := author2.NewService(repository, logger)
+	auService := service.NewService(repository, logger)
 	auHandler := author2.NewHandler(auService, logger)
 
 	//all, err := repository.FindAll(context.TODO())

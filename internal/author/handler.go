@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"restful_go_project/internal/apperror"
+	service2 "restful_go_project/internal/author/service"
 	"restful_go_project/pkg/api/sort"
 	"restful_go_project/pkg/logging"
 
@@ -20,11 +21,11 @@ const (
 )
 
 type handler struct {
-	service *Service
+	service *service2.Service
 	logger  *logging.Logger
 }
 
-func NewHandler(service *Service, logger *logging.Logger) handlers.Handler {
+func NewHandler(service *service2.Service, logger *logging.Logger) handlers.Handler {
 	return &handler{
 		service: service,
 		logger:  logger,
