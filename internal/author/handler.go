@@ -2,11 +2,14 @@ package author
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"restful_go_project/internal/apperror"
 	service2 "restful_go_project/internal/author/service"
 	"restful_go_project/pkg/api/sort"
 	"restful_go_project/pkg/logging"
+	"strconv"
+	"strings"
 
 	"restful_go_project/internal/handlers"
 
@@ -38,6 +41,44 @@ func (h *handler) Register(router *httprouter.Router) {
 }
 
 func (h *handler) GetList(w http.ResponseWriter, r *http.Request) error {
+	name := r.URL.Query().Get("name")
+	if name != "" {
+
+	}
+
+	age := r.URL.Query().Get("age")
+	if age != "" {
+		operator := "="
+		value := age
+		if strings.Index(age, ":") != -1 {
+			split := strings.Split(age, ":")
+			operator = split[0]
+			value = split[1]
+		}
+		fmt.Printf("operator: %s, value: %s", operator, value)
+	}
+
+	isAlive := r.URL.Query().Get("is_alive")
+	if isAlive != "" {
+		_, err := strconv.ParseBool(isAlive)
+		if err != nil {
+			validationError := apperror.BadRequestError("filter params validation failed", "wrong bool value")
+			validationError.WithParams(map[string]string{
+				"is_alive": "this field should be boolean: true or false",
+			})
+			return validationError
+		}
+	}
+
+	createdAt := r.URL.Query().Get("created_at")
+	if createdAt != "" {
+		if strings.Index(createdAt, ":") != -1 {
+			// range
+		} else {
+			// single
+		}
+	}
+
 	var sortOptions sort.Options
 	if options, ok := r.Context().Value(sort.OptionsContextKey).(sort.Options); ok {
 		sortOptions = options
