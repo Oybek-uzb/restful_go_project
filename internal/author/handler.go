@@ -2,10 +2,10 @@ package author
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"restful_go_project/internal/apperror"
 	service2 "restful_go_project/internal/author/service"
+	"restful_go_project/pkg/api/filter"
 	"restful_go_project/pkg/api/sort"
 	"restful_go_project/pkg/logging"
 	"strconv"
@@ -36,26 +36,35 @@ func NewHandler(service *service2.Service, logger *logging.Logger) handlers.Hand
 }
 
 func (h *handler) Register(router *httprouter.Router) {
-	router.HandlerFunc(http.MethodGet, authorsURL, sort.Middleware(apperror.Middleware(h.GetList), "created_at", sort.ASC))
+	router.HandlerFunc(http.MethodGet, authorsURL, filter.Middleware(sort.Middleware(apperror.Middleware(h.GetList), "created_at", sort.ASC), 10))
 
 }
 
 func (h *handler) GetList(w http.ResponseWriter, r *http.Request) error {
+
+	filterOptions := r.Context().Value(filter.OptionsContextKey).(filter.Options)
+
 	name := r.URL.Query().Get("name")
 	if name != "" {
-
+		err := filterOptions.AddField("name", filter.OperatorLike, name, filter.DataTypeString)
+		if err != nil {
+			return err
+		}
 	}
 
 	age := r.URL.Query().Get("age")
 	if age != "" {
-		operator := "="
+		operator := filter.OperatorEqual
 		value := age
 		if strings.Index(age, ":") != -1 {
 			split := strings.Split(age, ":")
 			operator = split[0]
 			value = split[1]
 		}
-		fmt.Printf("operator: %s, value: %s", operator, value)
+		err := filterOptions.AddField("age", operator, value, filter.DataTypeInt)
+		if err != nil {
+			return err
+		}
 	}
 
 	isAlive := r.URL.Query().Get("is_alive")
@@ -68,14 +77,25 @@ func (h *handler) GetList(w http.ResponseWriter, r *http.Request) error {
 			})
 			return validationError
 		}
+		err = filterOptions.AddField("is_alive", filter.OperatorEqual, isAlive, filter.DataTypeBool)
+		if err != nil {
+			return err
+		}
 	}
 
 	createdAt := r.URL.Query().Get("created_at")
 	if createdAt != "" {
+		var operator string
 		if strings.Index(createdAt, ":") != -1 {
 			// range
+			operator = filter.OperatorBetween
 		} else {
 			// single
+			operator = filter.OperatorEqual
+		}
+		err := filterOptions.AddField("created_at", operator, createdAt, filter.DataTypeDate)
+		if err != nil {
+			return err
 		}
 	}
 

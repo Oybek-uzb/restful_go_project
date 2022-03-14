@@ -8,6 +8,7 @@ import (
 	"github.com/jackc/pgconn"
 	"restful_go_project/internal/author/model"
 	"restful_go_project/internal/author/storage"
+	model2 "restful_go_project/internal/author/storage/model"
 	"restful_go_project/pkg/client/postgresql"
 	"restful_go_project/pkg/logging"
 	"strings"
@@ -44,7 +45,7 @@ func (r *repository) Create(ctx context.Context, author *model.Author) error {
 	return nil
 }
 
-func (r *repository) FindAll(ctx context.Context, sortOption storage.SortOptions) (u []model.Author, err error) {
+func (r *repository) FindAll(ctx context.Context, sortOption model2.SortOptions) (u []model.Author, err error) {
 	qb := sq.Select("id, name, age, is_alive, created_at").From("public.author")
 	if sortOption.Field != "" && sortOption.Order != "" {
 		qb = qb.OrderBy(fmt.Sprintf("%s %s", sortOption.Field, sortOption.Order))
